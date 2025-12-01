@@ -1,0 +1,232 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-10-15T03:30:00.000Z",
+  "__export_source": "gemini-api",
+  "resources": [
+    {
+      "_id": "wrk_1",
+      "parentId": null,
+      "modified": 1665804600000,
+      "created": 1665804600000,
+      "name": "API Toko Online",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_auth",
+      "parentId": "wrk_1",
+      "name": "1. Auth",
+      "description": "Endpoint untuk otentikasi",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_login",
+      "parentId": "fld_auth",
+      "name": "[POST] Login",
+      "url": "{{ _.baseUrl }}/auth/login",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"admin\",\n\t\"password\": \"passwordadmin\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "_type": "request"
+    },
+    {
+      "_id": "fld_users",
+      "parentId": "wrk_1",
+      "name": "2. User Management (Admin)",
+      "description": "Endpoint untuk manajemen pengguna",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_register",
+      "parentId": "fld_users",
+      "name": "[POST] Register User Baru",
+      "url": "{{ _.baseUrl }}/register",
+      "method": "POST",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"kasirbaru\",\n\t\"password\": \"passwordkasir\",\n\t\"fullname\": \"Kasir Tiga\",\n\t\"role\": \"kasir\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_profile",
+      "parentId": "fld_users",
+      "name": "[GET] Lihat Profil Sendiri",
+      "url": "{{ _.baseUrl }}/profile",
+      "method": "GET",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_deactivate",
+      "parentId": "fld_users",
+      "name": "[PUT] Deactivate User",
+      "url": "{{ _.baseUrl }}/deactivate-user",
+      "method": "PUT",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"id\": 3\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "fld_categories",
+      "parentId": "wrk_1",
+      "name": "3. Categories (Admin)",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_categories",
+      "parentId": "fld_categories",
+      "name": "[GET] Semua Kategori",
+      "url": "{{ _.baseUrl }}/categories",
+      "method": "GET",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_category",
+      "parentId": "fld_categories",
+      "name": "[POST] Buat Kategori Baru",
+      "url": "{{ _.baseUrl }}/categories",
+      "method": "POST",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Peralatan Mandi\",\n\t\"description\": \"Sabun, sampo, sikat gigi, dll.\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_category",
+      "parentId": "fld_categories",
+      "name": "[PUT] Update Kategori",
+      "url": "{{ _.baseUrl }}/categories/1",
+      "method": "PUT",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Makanan Ringan & Snack\",\n\t\"description\": \"Berbagai macam snack, keripik, biskuit, dan permen.\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_category",
+      "parentId": "fld_categories",
+      "name": "[DELETE] Hapus Kategori",
+      "url": "{{ _.baseUrl }}/categories/5",
+      "method": "DELETE",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "fld_products",
+      "parentId": "wrk_1",
+      "name": "4. Products (Admin)",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_products",
+      "parentId": "fld_products",
+      "name": "[GET] Semua Produk",
+      "url": "{{ _.baseUrl }}/products",
+      "method": "GET",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_product",
+      "parentId": "fld_products",
+      "name": "[POST] Buat Produk Baru",
+      "url": "{{ _.baseUrl }}/products",
+      "method": "POST",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"category_id\": 2,\n\t\"sku\": \"MIN-003\",\n\t\"name\": \"Coca-Cola Kaleng 330ml\",\n\t\"price\": 5000,\n\t\"stock\": 250,\n\t\"description\": \"Minuman soda berkarbonasi\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_product",
+      "parentId": "fld_products",
+      "name": "[PUT] Update Produk",
+      "url": "{{ _.baseUrl }}/products/1",
+      "method": "PUT",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"category_id\": 1,\n\t\"sku\": \"SNK-001-PROMO\",\n\t\"name\": \"Keripik Kentang Chitato 68g PROMO\",\n\t\"price\": 10500,\n\t\"stock\": 120,\n\t\"description\": \"Rasa sapi panggang\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_product",
+      "parentId": "fld_products",
+      "name": "[DELETE] Hapus Produk",
+      "url": "{{ _.baseUrl }}/products/9",
+      "method": "DELETE",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "fld_transactions",
+      "parentId": "wrk_1",
+      "name": "5. Transactions (Admin & Kasir)",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_transactions",
+      "parentId": "fld_transactions",
+      "name": "[GET] Semua Transaksi",
+      "url": "{{ _.baseUrl }}/transactions",
+      "method": "GET",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_transaction_detail",
+      "parentId": "fld_transactions",
+      "name": "[GET] Detail Transaksi",
+      "url": "{{ _.baseUrl }}/transactions/1",
+      "method": "GET",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_transaction",
+      "parentId": "fld_transactions",
+      "name": "[POST] Buat Transaksi Baru",
+      "url": "{{ _.baseUrl }}/transactions",
+      "method": "POST",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"payment_method\": \"cash\",\n\t\"customer_name\": \"Bambang\",\n\t\"items\": [\n\t\t{\n\t\t\t\"product_id\": 1,\n\t\t\t\"quantity\": 2\n\t\t},\n\t\t{\n\t\t\t\"product_id\": 4,\n\t\t\t\"quantity\": 5\n\t\t}\n\t]\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_transaction_status",
+      "parentId": "fld_transactions",
+      "name": "[PUT] Update Status Transaksi (Admin)",
+      "url": "{{ _.baseUrl }}/transactions/3",
+      "method": "PUT",
+      "authentication": { "type": "bearer", "token": "{{ _.authToken }}" },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"status\": \"canceled\"\n}"
+      },
+      "_type": "request"
+    }
+  ]
+}

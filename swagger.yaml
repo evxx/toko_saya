@@ -1,0 +1,459 @@
+openapi: 3.0.0
+info:
+  title: API Toko Online (Point of Sale)
+  version: 1.0.0
+  description: Dokumentasi API lengkap untuk proyek Toko Online, dibuat sesuai Jobsheet.
+servers:
+  - url: http://localhost:3000
+    description: Server Pengembangan
+
+# 1. Definisi Tag (Grup Endpoint)
+tags:
+  - name: Authentication
+    description: Endpoint untuk login, logout, dan refresh token
+  - name: User Management
+    description: API untuk manajemen pengguna (Profil, Registrasi, dll)
+  - name: Categories
+    description: API untuk manajemen kategori (Hanya Admin)
+  - name: Products
+    description: API untuk manajemen produk (Hanya Admin)
+  - name: Transactions
+    description: API untuk membuat dan melihat transaksi (Admin & Kasir)
+
+# 2. Definisi Keamanan (JWT)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Masukkan "Bearer [token]" (tanpa kurung). Token didapat dari /auth/login.'
+  
+  # 3. Definisi Skema (Bentuk Data)
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Minuman Dingin"
+        description:
+          type: string
+          example: "Berbagai minuman kemasan botol atau kaleng"
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        category_id:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: "MIN-001"
+        name:
+          type: string
+          example: "Teh Botol Sosro Kotak 250ml"
+        price:
+          type: number
+          format: double
+          example: 3500
+        stock:
+          type: integer
+          example: 200
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "admin"
+        fullname:
+          type: string
+          example: "Administrator"
+        role:
+          type: string
+          example: "admin"
+        is_active:
+          type: boolean
+          example: true
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Terjadi kesalahan"
+
+# 4. Definisi Endpoint (Paths)
+paths:
+
+  # --- AUTHENTICATION ---
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login pengguna (Admin/Kasir)
+      description: Mengautentikasi pengguna dan mengembalikan access serta refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "admin"
+                password:
+                  type: string
+                  example: "passwordadmin"
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login berhasil"
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '401':
+          description: Username atau password salah
+          
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Memperbarui Access Token
+      description: Mendapatkan access token baru menggunakan refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '403':
+          description: Refresh token tidak valid atau kadaluwarsa
+
+  /auth/logout:
+    delete:
+      tags: [Authentication]
+      summary: Logout pengguna
+      description: Mencabut (menghapus) refresh token dari database agar tidak bisa dipakai lagi.
+      security:
+        - bearerAuth: [] # Butuh Access Token untuk logout
+      responses:
+        '200':
+          description: Logout berhasil
+        '401':
+          description: Token tidak tersedia atau kedaluwarsa
+
+  # --- USER MANAGEMENT ---
+  /register:
+    post:
+      tags: [User Management]
+      summary: Registrasi user baru (Hanya Admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "kasir02"
+                password:
+                  type: string
+                  example: "passwordkasir"
+                fullname:
+                  type: string
+                  example: "Budi"
+                role:
+                  type: string
+                  example: "kasir"
+      responses:
+        '201':
+          description: Pengguna baru berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Hanya Admin yang bisa
+        '409':
+          description: Username sudah digunakan
+          
+  /profile:
+    get:
+      tags: [User Management]
+      summary: Melihat profil sendiri (Admin/Kasir)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Data profil pengguna
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Token tidak tersedia atau kedaluwarsa
+
+  /deactivate-user:
+    put:
+      tags: [User Management]
+      summary: Menonaktifkan akun user (Hanya Admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 3
+      responses:
+        '200':
+          description: Pengguna berhasil dinonaktifkan
+        '400':
+          description: Tidak dapat menonaktifkan akun sendiri
+        '404':
+          description: Pengguna tidak ditemukan
+
+  # --- CATEGORIES (ADMIN) ---
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Mengambil semua kategori (Hanya Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Daftar semua kategori
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      tags: [Categories]
+      summary: Membuat kategori baru (Hanya Admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Kebutuhan Dapur"
+                description:
+                  type: string
+                  example: "Minyak, gula, garam, dll."
+      responses:
+        '201':
+          description: Kategori berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '409':
+          description: Nama kategori sudah ada
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Mengambil kategori berdasarkan ID (Hanya Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail kategori
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Kategori tidak ditemukan
+    put:
+      tags: [Categories]
+      summary: Memperbarui kategori (Hanya Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Kebutuhan Pokok"
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Kategori berhasil diperbarui
+        '404':
+          description: Kategori tidak ditemukan
+    delete:
+      tags: [Categories]
+      summary: Menghapus kategori (Hanya Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kategori berhasil dihapus
+        '404':
+          description: Kategori tidak ditemukan
+        '400':
+          description: Kategori tidak bisa dihapus (masih digunakan oleh produk)
+
+  # --- PRODUCTS (ADMIN) ---
+  /products:
+    get:
+      tags: [Products]
+      summary: Mengambil semua produk (Hanya Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Daftar semua produk
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      tags: [Products]
+      summary: Membuat produk baru (Hanya Admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category_id:
+                  type: integer
+                  example: 1
+                sku:
+                  type: string
+                  example: "MIN-003"
+                name:
+                  type: string
+                  example: "Coca Cola"
+                price:
+                  type: number
+                  example: 5000
+                stock:
+                  type: integer
+                  example: 100
+      responses:
+        '201':
+          description: Produk berhasil dibuat
+        '400':
+          description: ID Kategori tidak valid
+        '409':
+          description: SKU sudah ada
+
+  # --- (Lakukan hal yang sama untuk /products/{id} (GET, PUT, DELETE) seperti /categories/{id}) ---
+
+  # --- TRANSACTIONS (ADMIN & KASIR) ---
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Mengambil semua transaksi (Admin/Kasir)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Daftar semua transaksi
+    post:
+      tags: [Transactions]
+      summary: Membuat transaksi baru (Admin/Kasir)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_method:
+                  type: string
+                  example: "cash"
+                customer_name:
+                  type: string
+                  example: "Bambang"
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product_id:
+                        type: integer
+                        example: 1
+                      quantity:
+                        type: integer
+                        example: 2
+      responses:
+        '201':
+          description: Transaksi berhasil dibuat
+        '400':
+          description: Stok tidak mencukupi atau produk tidak ditemukan
