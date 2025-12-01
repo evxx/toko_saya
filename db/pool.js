@@ -1,11 +1,12 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-    user: process.env.DB_USER || 'postgres',       
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'toko_online',     
-    password: process.env.DB_PASS || '',   
-    port: process.env.DB_PORT || 5432,                 
+    // user: process.env.DB_USER || 'postgres',       
+    // host: process.env.DB_HOST || 'localhost',
+    // database: process.env.DB_NAME || 'toko_online',     
+    // password: process.env.DB_PASS || '',   
+    // port: process.env.DB_PORT || 5432,       
+    connectionString: process.env.DB_CONN          
 });
 
 // Tes koneksi
