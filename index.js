@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+require('dotenv').config()
 const PORT = process.env.PORT || 3000;
 const cors = require('cors');
 
@@ -20,7 +21,6 @@ app.use(express.json());
 // --- SAJIKAN DOKUMENTASI SWAGGER ---
 // Endpoint ini akan menyajikan UI Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 
 
 const authRouter = require('./routes/auth');
