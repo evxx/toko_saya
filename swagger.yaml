@@ -4,6 +4,8 @@ info:
   version: 1.0.0
   description: Dokumentasi API lengkap untuk proyek Toko Online, dibuat sesuai Jobsheet.
 servers:
+  - url: https://toko-saya.onrender.com/
+    description: Server render
   - url: https://toko-saya-tau.vercel.app
     description: Server vercel
   - url: http://localhost:3000
