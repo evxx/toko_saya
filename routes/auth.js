@@ -4,44 +4,6 @@ const pool = require('../db/pool');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-/**
- * @swagger
- * /auth/login:
- * post:
- * summary: Login pengguna
- * tags: [Authentication]
- * description: Mengautentikasi pengguna (admin/kasir) dan mengembalikan access serta refresh token.
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * username:
- * type: string
- * example: "admin"
- * password:
- * type: string
- * example: "passwordadmin"
- * responses:
- * 200:
- * description: Login berhasil
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * accessToken:
- * type: string
- * refreshToken:
- * type: string
- * 401:
- * description: Username atau password salah
- */
-
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {

@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
-const { authenticate, isAdmin } = require('../middleware/auth');
+const { authenticate, isAdmin, isAdminOrKasir } = require('../middleware/auth');
 
 // Gunakan autentikasi dan otorisasi Admin untuk semua route di sini
-router.use(authenticate, isAdmin); 
+// router.use(authenticate, isAdmin); 
 
 // [GET] /products - Ambil semua produk (dengan nama kategori)
-router.get('/', async (req, res) => {
+router.get('/',  authenticate, isAdminOrKasir, async (req, res) => {
     try {
         const q = `
             SELECT 
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
 });
 
 // [GET] /products/:id - Ambil produk berdasarkan ID
-router.get('/:id', async (req, res) => {
+router.get('/:id',  authenticate, isAdminOrKasir, async (req, res) => {
     const { id } = req.params;
     try {
         const q = `
@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // [POST] /products - Tambah produk baru
-router.post('/', async (req, res) => {
+router.post('/',  authenticate, isAdmin, async (req, res) => {
     const { category_id, sku, name, price, stock, description } = req.body;
     if (!category_id || !sku || !name || price === undefined || stock === undefined) {
         return res.status(400).json({ message: 'Data produk (category_id, sku, name, price, stock) wajib diisi.' });
@@ -73,35 +73,55 @@ router.post('/', async (req, res) => {
 });
 
 // [PUT] /products/:id - Ubah produk
-router.put('/:id', async (req, res) => {
+router.put('/:id',  authenticate, isAdminOrKasir, async (req, res) => {
     const { id } = req.params;
     const { category_id, sku, name, price, stock, description } = req.body;
-    if (!category_id || !sku || !name || price === undefined || stock === undefined) {
-        return res.status(400).json({ message: 'Data produk (category_id, sku, name, price, stock) wajib diisi.' });
-    }
-    try {
-        const result = await pool.query(
-            'UPDATE products SET category_id = $1, sku = $2, name = $3, price = $4, stock = $5, description = $6, updated_at = NOW() WHERE id = $7 RETURNING *',
-            [category_id, sku, name, price, stock, description, id]
-        );
+    const userRole = req.user.userRole;
+
+   try {
+        let query;
+        let params;
+
+        if (userRole === 'admin') {
+            // Admin bisa mengubah semua field
+            if (!category_id || !sku || !name || price === undefined || stock === undefined) {
+                return res.status(400).json({ message: 'Data produk lengkap wajib diisi oleh Admin.' });
+            }
+            query = `
+                UPDATE products 
+                SET category_id = $1, sku = $2, name = $3, price = $4, stock = $5, description = $6, updated_at = NOW() 
+                WHERE id = $7 RETURNING *`;
+            params = [category_id, sku, name, price, stock, description, id];
+        } else {
+            // Kasir HANYA bisa mengubah harga dan stok
+            if (price === undefined || stock === undefined) {
+                return res.status(400).json({ message: 'Data harga dan stok wajib diisi.' });
+            }
+            query = `
+                UPDATE products 
+                SET price = $1, stock = $2, updated_at = NOW() 
+                WHERE id = $3 RETURNING *`;
+            params = [price, stock, id];
+        }
+
+        const result = await pool.query(query, params);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Produk tidak ditemukan.' });
         }
-        res.status(200).json({ message: 'Produk berhasil diperbarui', data: result.rows[0] });
+
+        const msg = userRole === 'admin' ? 'Produk berhasil diperbarui' : 'Stok dan harga produk berhasil diperbarui oleh Kasir';
+        res.status(200).json({ message: msg, data: result.rows[0] });
+
     } catch (error) {
-        if (error.code === '23505') { // Duplikat SKU
-            return res.status(409).json({ message: 'SKU produk sudah ada.' });
-        }
-        if (error.code === '23503') { // category_id tidak valid (Foreign Key)
-            return res.status(400).json({ message: 'ID kategori tidak valid.' });
-        }
+        if (error.code === '23505') return res.status(409).json({ message: 'SKU produk sudah ada.' });
+        if (error.code === '23503') return res.status(400).json({ message: 'ID kategori tidak valid.' });
         console.error(error);
         res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
     }
 });
 
 // [DELETE] /products/:id - Hapus produk
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',  authenticate, isAdmin, async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);

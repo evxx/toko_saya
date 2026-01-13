@@ -1,50 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
-const { authenticate, isAdmin } = require('../middleware/auth');
-
-/**
- * @swagger
- * tags:
- * name: Categories
- * description: API untuk manajemen kategori (Hanya Admin)
- */
-
-/**
- * @swagger
- * /categories:
- * get:
- * summary: Mengambil semua kategori
- * tags: [Categories]
- * security:
- * - bearerAuth: []  # <-- Menandakan endpoint ini butuh JWT
- * responses:
- * 200:
- * description: Daftar semua kategori
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * type: object
- * properties:
- * id:
- * type: integer
- * name:
- * type: string
- * description:
- * type: string
- * 401:
- * description: Token tidak tersedia atau kedaluwarsa
- * 403:
- * description: Token tidak valid atau peran bukan Admin
- */
+const { authenticate, isAdmin, isAdminOrKasir } = require('../middleware/auth');
 
 // Gunakan autentikasi dan otorisasi Admin untuk semua route di sini
-router.use(authenticate, isAdmin); 
+// router.use(authenticate, isAdmin); 
 
 // [GET] /categories - Ambil semua kategori
-router.get('/', async (req, res) => {
+router.get('/', authenticate, isAdminOrKasir, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM categories ORDER BY id ASC');
         res.status(200).json(result.rows);
@@ -55,7 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // [GET] /categories/:id - Ambil kategori berdasarkan ID
-router.get('/:id', async (req, res) => {
+router.get('/:id',  authenticate, isAdminOrKasir, async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
@@ -70,7 +33,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // [POST] /categories - Tambah kategori baru
-router.post('/', async (req, res) => {
+router.post('/',  authenticate, isAdmin, async (req, res) => {
     const { name, description } = req.body;
     if (!name) {
         return res.status(400).json({ message: 'Nama kategori wajib diisi.' });
@@ -92,7 +55,7 @@ router.post('/', async (req, res) => {
 });
 
 // [PUT] /categories/:id - Ubah kategori
-router.put('/:id', async (req, res) => {
+router.put('/:id',  authenticate, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
     if (!name) {
@@ -117,7 +80,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // [DELETE] /categories/:id - Hapus kategori
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',  authenticate, isAdmin, async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM categories WHERE id = $1 RETURNING id', [id]);
