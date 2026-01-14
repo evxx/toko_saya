@@ -115,7 +115,7 @@ paths:
                   example: "admin"
                 password:
                   type: string
-                  example: "passwordadmin"
+                  example: "admin123"
       responses:
         '200':
           description: Login berhasil
@@ -252,11 +252,11 @@ paths:
         '404':
           description: Pengguna tidak ditemukan
 
-  # --- CATEGORIES (ADMIN) ---
+  # --- CATEGORIES (ADMIN, KASIR MELIHAT SEMUA KATEGORI) ---
   /categories:
     get:
       tags: [Categories]
-      summary: Mengambil semua kategori (Hanya Admin)
+      summary: Mengambil semua kategori
       security:
         - bearerAuth: []
       responses:
@@ -299,7 +299,7 @@ paths:
   /categories/{id}:
     get:
       tags: [Categories]
-      summary: Mengambil kategori berdasarkan ID (Hanya Admin)
+      summary: Mengambil kategori berdasarkan ID
       security:
         - bearerAuth: []
       parameters:
@@ -364,11 +364,11 @@ paths:
         '400':
           description: Kategori tidak bisa dihapus (masih digunakan oleh produk)
 
-  # --- PRODUCTS (ADMIN) ---
+  # --- PRODUCTS (ADMIN DAN KASIR) ---
   /products:
     get:
       tags: [Products]
-      summary: Mengambil semua produk (Hanya Admin)
+      summary: Mengambil semua produk
       security:
         - bearerAuth: []
       responses:
@@ -415,8 +415,84 @@ paths:
         '409':
           description: SKU sudah ada
 
-  # --- (Lakukan hal yang sama untuk /products/{id} (GET, PUT, DELETE) seperti /categories/{id}) ---
-
+  # --- GET By ID, EDIT, DELETE PRODUK ---
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Mengambil produk berdasarkan ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Produk tidak ditemukan
+    put:
+      tags: [Products]
+      summary: Memperbarui produk (Kasir hanya dapat memperbarui stok dan harga)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sku:
+                  type: string
+                  example: "SNK-001-PROMO"
+                name:
+                  type: string
+                  example: "Keripik Kentang Chitato 68g PROMO"
+                price:
+                  type: integer
+                  example: 10500.00
+                stock:
+                  type: integer
+                  example: 120
+                description:
+                  type: string
+                  example: "Rasa sapi panggang"
+      responses:
+        '200':
+          description: Produk berhasil diperbarui
+        '404':
+          description: Produk tidak ditemukan
+    delete:
+      tags: [Products]
+      summary: Menghapus produk (Hanya Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Produk berhasil dihapus
+        '404':
+          description: Produk tidak ditemukan
+        '400':
+          description: Produk tidak bisa dihapus (masih digunakan oleh transaksi)
   # --- TRANSACTIONS (ADMIN & KASIR) ---
   /transactions:
     get:
@@ -461,3 +537,50 @@ paths:
           description: Transaksi berhasil dibuat
         '400':
           description: Stok tidak mencukupi atau produk tidak ditemukan
+  /transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Mengambil transaksi berdasarkan ID (Admin/Kasir)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail Transaksi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaksi tidak ditemukan
+    put:
+      tags: [Transactions]
+      summary: Memperbarui transaksi (Hanya ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "canceled"
+      responses:
+        '200':
+          description: Transaksi berhasil diperbarui
+        '404':
+          description: Transaksi tidak ditemukan

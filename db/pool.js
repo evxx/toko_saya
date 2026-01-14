@@ -1,5 +1,8 @@
 const { Pool } = require('pg');
 const fs = require('fs')
+const dotenv = require('dotenv')
+
+dotenv.config({quiet:true})
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
@@ -7,7 +10,8 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'toko_online',
     password: process.env.DB_PASS || '',
     port: process.env.DB_PORT || 5432,
-    //connectionString: process.env.DB_CONN || 'postgresql://postgres.nbtbhczulihwyhatiycy:$4sBJgC3Z%?5hrf@aws-1-ap-south-1.pooler.supabase.com:5432/postgres'
+    ssl: { rejectUnauthorized: false }
+    //connectionString: process.env.DB_CONN || 'postgresql://postgres.gvgcfbrhgqyxpifscjpt:[YOUR-PASSWORD]@aws-1-ap-south-1.pooler.supabase.com:6543/postgres'
 });
 
 // Tes koneksi

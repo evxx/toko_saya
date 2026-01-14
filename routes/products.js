@@ -76,7 +76,8 @@ router.post('/',  authenticate, isAdmin, async (req, res) => {
 router.put('/:id',  authenticate, isAdminOrKasir, async (req, res) => {
     const { id } = req.params;
     const { category_id, sku, name, price, stock, description } = req.body;
-    const userRole = req.user.userRole;
+    const userRole = req.user.role;
+    console.log(req.user);
 
    try {
         let query;
